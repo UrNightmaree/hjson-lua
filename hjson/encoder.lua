@@ -6,7 +6,7 @@ local escape_char_map = {
     ["\f"] = "\\f",
     ["\n"] = "\\n",
     ["\r"] = "\\r",
-    ["\t"] = "\\t"
+    ["\t"] = "\\t",
 }
 
 local is53 = _VERSION >= "Lua 5.3"
@@ -15,7 +15,9 @@ local function isArray(t)
     local i = 0
     for _ in pairs(t) do
         i = i + 1
-        if t[i] == nil then return false end
+        if t[i] == nil then
+            return false
+        end
     end
     return true
 end
@@ -25,10 +27,12 @@ local function escapeChar(c)
 end
 
 local function encodeString(s)
-    return '"' .. s:gsub("["..(is53 and "\0" or "%z\1")..'-\31\\"]', escapeChar) .. '"'
+    return '"' .. s:gsub("[" .. (is53 and "\0" or "%z\1") .. '-\31\\"]', escapeChar) .. '"'
 end
 
-local function encodeNil(val) return "null" end
+local function encodeNil(val)
+    return "null"
+end
 
 local function encodeNumber(val)
     -- Check for NaN, -inf and inf
@@ -41,21 +45,28 @@ end
 local JsonEncoder = {}
 
 function JsonEncoder:new(options)
-    if type(options) ~= "table" then options = {} end
-    local indent, skipkeys, sortKeys, item_sort_key, invalidObjectsAsType =
-        options.indent, options.skipkeys, options.sortKeys,
-        options.item_sort_key, options.invalidObjectsAsType
-
-    if skipkeys == nil then skipkeys = true end
-    if indent == nil then indent = "    " end
-    if type(indent) ~= "number" and type(indent) ~= "string" and type(indent) ~=
-        "boolean" then
-        error(
-            "indent (#1 parameter) has to be of type string, number or boolean")
+    if type(options) ~= "table" then
+        options = {}
     end
-    if type(indent) == "number" then indent = string.rep(" ", indent) end
+    local indent, skipkeys, sortKeys, item_sort_key, invalidObjectsAsType =
+        options.indent, options.skipkeys, options.sortKeys, options.item_sort_key, options.invalidObjectsAsType
 
-    if type(indent) == "boolean" and indent then indent = "    " end
+    if skipkeys == nil then
+        skipkeys = true
+    end
+    if indent == nil then
+        indent = "    "
+    end
+    if type(indent) ~= "number" and type(indent) ~= "string" and type(indent) ~= "boolean" then
+        error("indent (#1 parameter) has to be of type string, number or boolean")
+    end
+    if type(indent) == "number" then
+        indent = string.rep(" ", indent)
+    end
+
+    if type(indent) == "boolean" and indent then
+        indent = "    "
+    end
 
     if indent and not indent:match("%s*") then
         error("Indent has to contain only whitespace characters or be a number")
@@ -73,13 +84,19 @@ function JsonEncoder:new(options)
         elseif _type == "string" then
             return encodeString(key)
         end
-        if skipkeys then return nil end
+        if skipkeys then
+            return nil
+        end
         error(string.format("Invalid key type - %s (%s) ", _type, key))
     end
 
     local function encodeArray(arr, encode)
-        if not arr or #arr == 0 then return "[]" end
-        if stack[arr] then error("circular reference") end
+        if not arr or #arr == 0 then
+            return "[]"
+        end
+        if stack[arr] then
+            error("circular reference")
+        end
         stack[arr] = true
         local separator = ","
         local newlineIndent = ""
@@ -91,7 +108,9 @@ function JsonEncoder:new(options)
         local buf = "[" .. newlineIndent
         for i, v in ipairs(arr) do
             buf = buf .. encode(v)
-            if i ~= #arr then buf = buf .. separator end
+            if i ~= #arr then
+                buf = buf .. separator
+            end
         end
         if indent then
             currentIndentLevel = currentIndentLevel - 1
@@ -103,8 +122,12 @@ function JsonEncoder:new(options)
     end
 
     local function encodeTable(tab, encode)
-        if not tab then return "{}" end
-        if stack[tab] then error("circular reference") end
+        if not tab then
+            return "{}"
+        end
+        if stack[tab] then
+            error("circular reference")
+        end
         stack[tab] = true
         local newlineIndent = ""
         local separator = ","
@@ -131,8 +154,7 @@ function JsonEncoder:new(options)
             if type(item_sort_key) == "function" then
                 table.sort(keyset, item_sort_key)
             else
-                table.sort(keyset,
-                           function(a, b)
+                table.sort(keyset, function(a, b)
                     return a:upper() < b:upper()
                 end)
             end
@@ -142,7 +164,9 @@ function JsonEncoder:new(options)
             local k = keysetMap[sk]
             local v = tab[k]
             buf = buf .. sk .. keySeparator .. encode(v)
-            if i ~= #keyset then buf = buf .. separator end
+            if i ~= #keyset then
+                buf = buf .. separator
+            end
         end
         if indent then
             currentIndentLevel = currentIndentLevel - 1
@@ -159,7 +183,7 @@ function JsonEncoder:new(options)
         ["array"] = encodeArray,
         ["string"] = encodeString,
         ["number"] = encodeNumber,
-        ["boolean"] = tostring
+        ["boolean"] = tostring,
     }
 
     local function encode(o)
@@ -172,14 +196,16 @@ function JsonEncoder:new(options)
             end
         end
         local func = encodeFunctionMap[_type]
-        if type(func) == "function" then return func(o, encode) end
+        if type(func) == "function" then
+            return func(o, encode)
+        end
         if invalidObjectsAsType then
-            return encodeFunctionMap["string"]('__lua_' .. type(o))
+            return encodeFunctionMap["string"]("__lua_" .. type(o))
         end
         error("Unexpected type '" .. _type .. "'")
     end
 
-    local je = {_encode = encode}
+    local je = { _encode = encode }
     setmetatable(je, self)
     self.__index = self
 

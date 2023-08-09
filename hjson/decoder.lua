@@ -11,13 +11,13 @@ local BACKSLASH = {
     ["f"] = string.char(12),
     ["n"] = string.char(10),
     ["r"] = string.char(13),
-    ["t"] = string.char(9)
+    ["t"] = string.char(9),
 }
 
 local is53 = _VERSION >= "Lua 5.3"
 
 local function trim(s)
-    local n = s:find "%S"
+    local n = s:find("%S")
     return n and s:match(".*%S", n) or ""
 end
 
@@ -156,7 +156,7 @@ function HjsonDecoder:new(strict, object_hook, object_pairs_hook)
         while true do
             ::scan_string_loop_start::
             -- From hjson-py --> '(.*?)([\'"\\\x00-\x1f])'
-            local content, terminator = s:match('(.-)([\'"\\'..(is53 and "\0" or "%z\1")..'-\31])', _end)
+            local content, terminator = s:match("(.-)(['\"\\" .. (is53 and "\0" or "%z\1") .. "-\31])", _end)
             if not content then
                 decodeError(s, begin, "Unterminated string")
             end
@@ -286,9 +286,13 @@ function HjsonDecoder:new(strict, object_hook, object_pairs_hook)
             local isEol = ch == "\r" or ch == "\n" or ch == ""
 
             if
-                isEol or ch == "," or ch == "}" or ch == "]" or ch == "#" or
-                    ch == "/" and (charAt(s, _end + 1) == "/" or charAt(s, _end + 1) == "*")
-             then
+                isEol
+                or ch == ","
+                or ch == "}"
+                or ch == "]"
+                or ch == "#"
+                or ch == "/" and (charAt(s, _end + 1) == "/" or charAt(s, _end + 1) == "*")
+            then
                 local m = nil
                 local integer = nil
                 local frac = nil
@@ -356,9 +360,9 @@ function HjsonDecoder:new(strict, object_hook, object_pairs_hook)
                 decodeError(
                     s,
                     begin,
-                    "Found '" ..
-                        ch ..
-                            "' where a key name was expected (check your syntax or use quotes if the key name includes {}[],: or whitespace)"
+                    "Found '"
+                        .. ch
+                        .. "' where a key name was expected (check your syntax or use quotes if the key name includes {}[],: or whitespace)"
                 )
             end
             _end = _end + 1
@@ -422,7 +426,7 @@ function HjsonDecoder:new(strict, object_hook, object_pairs_hook)
 
             ch, _end = getNext(s, _end + 1)
             value, _end = scanOnce(s, _end)
-            table.insert(pairs, {[key] = value})
+            table.insert(pairs, { [key] = value })
 
             ch, _end = getNext(s, _end)
             if ch == "," then
@@ -500,9 +504,9 @@ function HjsonDecoder:new(strict, object_hook, object_pairs_hook)
                 return parseString(string, idx + 1)
             end
         elseif ch == "{" then
-            return parseObject({s = string, _end = idx + 1}, _scanOnce)
+            return parseObject({ s = string, _end = idx + 1 }, _scanOnce)
         elseif ch == "[" then
-            return parseArray({s = string, _end = idx + 1}, _scanOnce)
+            return parseArray({ s = string, _end = idx + 1 }, _scanOnce)
         end
         return parsePrimitive(string, idx)
     end
@@ -524,7 +528,7 @@ function HjsonDecoder:new(strict, object_hook, object_pairs_hook)
         if idx <= 0 then
             decodeError(string, idx, "Expecting value")
         end
-        local status, result, _end = pcall(parseObject, {s = string, _end = idx}, _scanOnce, true)
+        local status, result, _end = pcall(parseObject, { s = string, _end = idx }, _scanOnce, true)
         memo = {}
         if not status then
             error(result)
@@ -537,7 +541,7 @@ function HjsonDecoder:new(strict, object_hook, object_pairs_hook)
     local hd = {
         get_next = getNext,
         scan_once = scanOnce,
-        scan_object_once = scanObjectOnce
+        scan_object_once = scanObjectOnce,
     }
     setmetatable(hd, self)
     self.__index = self
@@ -571,7 +575,7 @@ function HjsonDecoder:raw_decode(s, idx)
     end
 
     -- Strip UTF-8 bom
-    if (#s > idx) then
+    if #s > idx then
         local b1, b2, b3 = s:byte(1, 3)
         if b1 == 0xfe and b2 == 0xff then
             s = s:sub(2)
