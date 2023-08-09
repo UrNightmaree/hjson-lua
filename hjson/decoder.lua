@@ -14,6 +14,8 @@ local BACKSLASH = {
     ["t"] = string.char(9)
 }
 
+local is53 = _VERSION >= "Lua 5.3"
+
 local function trim(s)
     local n = s:find "%S"
     return n and s:match(".*%S", n) or ""
@@ -154,7 +156,7 @@ function HjsonDecoder:new(strict, object_hook, object_pairs_hook)
         while true do
             ::scan_string_loop_start::
             -- From hjson-py --> '(.*?)([\'"\\\x00-\x1f])'
-            local content, terminator = s:match('(.-)([\'"\\\x00-\x1f])', _end)
+            local content, terminator = s:match('(.-)([\'"\\'..(is53 and "\0" or "%z\1")..'-\31])', _end)
             if not content then
                 decodeError(s, begin, "Unterminated string")
             end

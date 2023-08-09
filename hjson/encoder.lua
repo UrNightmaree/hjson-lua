@@ -9,6 +9,8 @@ local escape_char_map = {
     ["\t"] = "\\t"
 }
 
+local is53 = _VERSION >= "Lua 5.3"
+
 local function isArray(t)
     local i = 0
     for _ in pairs(t) do
@@ -23,7 +25,7 @@ local function escapeChar(c)
 end
 
 local function encodeString(s)
-    return '"' .. s:gsub('[%z\1-\31\\"]', escapeChar) .. '"'
+    return '"' .. s:gsub("["..(is53 and "\0" or "%z\1")..'-\31\\"]', escapeChar) .. '"'
 end
 
 local function encodeNil(val) return "null" end
